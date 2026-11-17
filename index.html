@@ -141,6 +141,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <button class="copy" id="kaydet">Teklifi kaydet</button>
 <button class="copy" id="cp" style="margin-top:10px;background:var(--card);color:var(--acc)">Müşteri teklifini kopyala</button>
 <div class="foot" style="text-align:center">Kopyalanan metinde minimum fiyat ve maliyet yer almaz.</div>
+<div class="foot" style="text-align:center;margin-top:14px">Sürüm 4</div>
 </div>
 </div>
 
@@ -307,6 +308,20 @@ function yerelMod(){if(UNSUB){try{UNSUB()}catch(e){}UNSUB=null}COL=null;KAYIT=ls
 })();
 
 renderParcalar();renderChips();hesap();renderKayit();
+// ---- Otomatik güncelleme (sadece GitHub sürümü) ----
+const SURUM='4';
+(async()=>{
+  let ust=false;try{ust=window.top===window.self}catch(e){}
+  if(!ust||!window.fetch)return;
+  try{
+    const r=await fetch(location.origin+location.pathname,{cache:'reload'});
+    if(!r.ok)return;
+    const m=(await r.text()).match(/const SURUM='([^']+)'/);
+    if(m&&m[1]!==SURUM&&new URLSearchParams(location.search).get('v')!==m[1]){
+      location.replace(location.pathname+'?v='+encodeURIComponent(m[1]));
+    }
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
