@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sitare Teklif">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f2f7">
+<title>Sitare Teklif</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--txt:#1c1c1e;--sub:#8a8a8e;--line:#e5e5ea;--acc:#8b5e34;--ok:#1f9d55;--warn:#d97706;--red:#d63c3c}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--txt:#f2f2f7;--sub:#98989f;--line:#2c2c2e;--acc:#c8915c;--ok:#34c759;--warn:#ff9f0a;--red:#ff6961}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+padding:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 16px)}
+.wrap{max-width:520px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;margin:4px 4px 14px}
+h1{font-size:30px;margin:0;font-weight:800}
+.lnk{background:none;border:0;color:var(--red);font-size:16px;padding:6px}
+h2{font-size:13px;text-transform:uppercase;color:var(--sub);font-weight:500;margin:20px 16px 6px;letter-spacing:.3px}
+.card{background:var(--card);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;padding:11px 16px;min-height:46px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row label{flex:1}
+input{font:inherit;color:var(--txt);background:transparent;border:0;outline:0;min-width:0}
+input.t{flex:1}
+input.n{text-align:right;width:120px}
+.cur{color:var(--sub)}
+.seg{display:flex;background:var(--line);border-radius:9px;padding:2px;margin:10px 16px 12px}
+.seg button{flex:1;border:0;background:none;font:inherit;font-size:15px;padding:7px;border-radius:7px;color:var(--txt)}
+.seg button.on{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.step{display:flex;gap:6px}
+.step button{width:40px;height:32px;border:0;border-radius:8px;background:var(--line);color:var(--txt);font-size:20px}
+.foot{font-size:13px;color:var(--sub);margin:6px 16px 0}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 14px}
+.chips button{border:0;border-radius:16px;padding:7px 13px;font:inherit;font-size:15px;background:var(--line);color:var(--txt);flex:none}
+.chips button.on{background:var(--acc);color:#fff;font-weight:600}
+.big{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.v{font-weight:600;font-variant-numeric:tabular-nums}
+.res{padding:12px 16px;border-bottom:1px solid var(--line)}
+.res small{display:block;font-size:12px;font-weight:600;color:var(--sub);letter-spacing:.3px}
+.res .opt{font-size:38px;font-weight:800;color:var(--ok);font-variant-numeric:tabular-nums}
+.res .min{font-size:26px;font-weight:800;color:var(--warn);font-variant-numeric:tabular-nums}
+.pp{padding:10px 16px;border-bottom:1px solid var(--line)}.pp:last-child{border-bottom:0}
+.pp b{display:block}.pp .l{display:flex;justify-content:space-between;font-size:15px}
+.ki{padding:12px 16px;border-bottom:1px solid var(--line)}.ki:last-child{border-bottom:0}
+.kh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ki .l{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-top:3px}
+.ki .s{font-size:13px;color:var(--sub)}
+.kb{display:flex;gap:8px;margin-top:10px}
+.kb button{flex:1;border:0;border-radius:8px;padding:8px;font:inherit;font-size:15px;background:var(--line);color:var(--txt)}
+.kb .del{flex:none;color:var(--red)}
+.kk{display:flex;justify-content:space-between;font-size:15px;margin-top:4px;color:var(--sub)}
+.kk b{color:var(--txt);font-variant-numeric:tabular-nums}
+.empty{padding:28px 16px;text-align:center;color:var(--sub)}
+.copy{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:inherit;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Sitare Teklif</h1><button class="lnk" id="clr">Temizle</button></header>
+<div class="seg" style="margin:0 0 4px"><button id="tH" class="on">Hesapla</button><button id="tK">Kaydedilenler (<span id="kSay">0</span>)</button></div>
+
+<div id="vKayit" hidden>
+  <h2>Kaydedilen Teklifler</h2>
+  <div class="card" id="kList"></div>
+  <div class="foot" id="kDurum"></div>
+  <div class="foot" id="kDepo" style="font-weight:600"></div>
+</div>
+
+<div id="vHesap">
+
+<h2>Ürün</h2>
+<div class="card">
+  <div class="row"><input class="t" id="ad" placeholder="Ürün adı (ör. Milano Koltuk Takımı)"></div>
+  <div class="seg"><button id="mT" class="on">Bütün Takım</button><button id="mP">Parça Parça</button></div>
+</div>
+
+<div id="takim">
+  <h2>Takım Fiyatı</h2>
+  <div class="card"><div class="row"><label>Normal fiyat</label><input class="n" id="tf" inputmode="decimal" placeholder="0"><span class="cur">₺</span></div></div>
+</div>
+
+<div id="parca" hidden>
+  <h2>Parçalar</h2>
+  <div class="card">
+    <div class="row"><label>Parça sayısı: <b id="pc">2</b></label><div class="step"><button id="pm">−</button><button id="pa">+</button></div></div>
+    <div id="plist"></div>
+  </div>
+  <div class="foot">Parçaların toplamı: <b id="ptot">0 ₺</b></div>
+</div>
+
+<h2>İndirim Oranı</h2>
+<div class="card">
+  <div class="row"><label>İndirim</label><span class="big" id="yz">%10</span></div>
+  <div style="padding:6px 16px 4px"><input type="range" id="sl" min="0" max="35" step="1" value="10"></div>
+  <div class="chips" id="chips"></div>
+</div>
+<div class="foot">Yapabileceğin maksimum indirim: <b id="mx1">%35</b></div>
+
+<h2>Teklif</h2>
+<div class="card">
+  <div class="row"><label>Normal fiyat</label><span class="v" id="rN">0 ₺</span></div>
+  <div class="row"><label id="rIl">İndirim tutarı (%10)</label><span class="v" style="color:var(--red)" id="rI">−0 ₺</span></div>
+  <div class="res"><small>OPTİMUM TEKLİF (çıkan fiyat)</small><div class="opt" id="rO">0 ₺</div><div class="kk"><span class="kkl">Kredi kartı ile (÷ 0,87)</span><b id="rOk">0 ₺</b></div></div>
+  <div class="res"><small id="rMl">MİNİMUM TEKLİF (%35 – son fiyat)</small><div class="min" id="rM">0 ₺</div><div class="kk"><span class="kkl">Kredi kartı ile (÷ 0,87)</span><b id="rMk">0 ₺</b></div></div>
+  <div class="row"><label>Kalan pazarlık payı</label><span class="v" id="rP">0 ₺</span></div>
+</div>
+
+<h2 style="display:flex;justify-content:space-between;align-items:center">Maliyet &amp; Kâr <button class="lnk" id="mg" style="color:var(--acc);font-size:14px;padding:0;text-transform:none">Gizle</button></h2>
+<div class="card" id="mWrap">
+  <div class="row"><label>Geliş bedeli <span class="cur" id="bl1">(÷ 2,2)</span></label><span class="v" id="kM">0 ₺</span></div>
+  <div class="row"><label>Optimum teklifte kâr</label><span style="text-align:right"><span class="v" id="kO">0 ₺</span><br><small class="cur" id="kOp"></small></span></div>
+  <div class="row"><label>Minimum teklifte kâr</label><span style="text-align:right"><span class="v" id="kN">0 ₺</span><br><small class="cur" id="kNp"></small></span></div>
+</div>
+
+<div id="ppWrap" hidden><h2>Parça Bazında</h2><div class="card" id="pp"></div></div>
+
+<h2>Ayarlar</h2>
+<div class="card">
+  <div class="row"><label>Maksimum indirim: <b id="mx2">%35</b></label><div class="step"><button id="xm">−</button><button id="xa">+</button></div></div>
+  <div class="row"><label>Geliş bedeli böleni: <b id="bl2">2,2</b></label><div class="step"><button id="bm">−</button><button id="ba">+</button></div></div>
+  <div class="row"><label>Kredi kartı katsayısı: <b id="kk2">0,87</b></label><div class="step"><button id="km">−</button><button id="ka">+</button></div></div>
+</div>
+
+<h2>Kaydet</h2>
+<div class="card"><div class="row"><input class="t" id="not" placeholder="Müşteri adı / not (isteğe bağlı)"></div></div>
+<button class="copy" id="kaydet">Teklifi kaydet</button>
+<button class="copy" id="cp" style="margin-top:10px;background:var(--card);color:var(--acc)">Müşteri teklifini kopyala</button>
+<div class="foot" style="text-align:center">Kopyalanan metinde minimum fiyat ve maliyet yer almaz.</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const S={mod:'takim',parcalar:[{ad:'',f:0},{ad:'',f:0}],ind:10,max:35};
+S.bol=2.2;S.gizli=false;S.kk=0.87;
+try{const k=parseFloat(localStorage.getItem('kkkat'));if(k>=0.5&&k<=1)S.kk=k}catch(e){}
+const fk=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+try{const m=parseFloat(localStorage.getItem('maks'));if(m>=5&&m<=90)S.max=m}catch(e){}
+try{const b=parseFloat(localStorage.getItem('bolen'));if(b>=1&&b<=5)S.bol=b;S.gizli=localStorage.getItem('mgizli')==='1'}catch(e){}
+const fb=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
+function kar(el,pel,k,C){$(el).textContent=tl(k);$(el).style.color=k<0?'var(--red)':'var(--ok)';$(pel).textContent=C>0?`maliyetin %${Math.round(k/C*100)} üstü`:''}
+const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:0});
+const tl=v=>fmt.format(Math.round(v))+' ₺';
+const num=s=>{s=String(s).replace(/\s|₺/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const n=parseFloat(s);return isNaN(n)?0:n};
+const indirimli=(f,y)=>f*(1-y/100);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function normal(){return S.mod==='takim'?num($('tf').value):S.parcalar.reduce((a,p)=>a+p.f,0)}
+function gInd(){return Math.min(S.ind,S.max)}
+
+function renderParcalar(){
+  $('pc').textContent=S.parcalar.length;
+  $('plist').innerHTML=S.parcalar.map((p,i)=>`<div class="row"><input class="t" data-i="${i}" data-k="ad" placeholder="Parça ${i+1}" value="${esc(p.ad)}"><input class="n" data-i="${i}" data-k="f" inputmode="decimal" placeholder="0" value="${p.f?fmt.format(p.f):''}" style="width:110px"><span class="cur">₺</span></div>`).join('');
+}
+function renderChips(){
+  $('chips').innerHTML=[5,10,15,20,25,30,35].filter(y=>y<=S.max).map(y=>`<button data-y="${y}" class="${gInd()===y?'on':''}">%${y}</button>`).join('');
+}
+function hesap(){
+  const N=normal(),y=gInd(),O=indirimli(N,y),M=indirimli(N,S.max);
+  $('sl').max=S.max;$('sl').value=y;$('yz').textContent='%'+y;
+  $('mx1').textContent=$('mx2').textContent='%'+S.max;
+  $('rN').textContent=tl(N);$('rIl').textContent=`İndirim tutarı (%${y})`;$('rI').textContent='−'+tl(N-O);
+  $('rO').textContent=tl(O);$('rMl').textContent=`MİNİMUM TEKLİF (%${S.max} – son fiyat)`;$('rM').textContent=tl(M);
+  $('rP').textContent=tl(O-M);
+  $('rOk').textContent=tl(O/S.kk);$('rMk').textContent=tl(M/S.kk);
+  document.querySelectorAll('.kkl').forEach(e=>e.textContent=`Kredi kartı ile (÷ ${fk.format(S.kk)})`);$('kk2').textContent=fk.format(S.kk);
+  const C=N/S.bol;$('kM').textContent=tl(C);kar('kO','kOp',O-C,C);kar('kN','kNp',M-C,C);
+  $('bl1').textContent=`(÷ ${fb.format(S.bol)})`;$('bl2').textContent=fb.format(S.bol);
+  $('mWrap').hidden=S.gizli;$('mg').textContent=S.gizli?'Göster':'Gizle';$('ptot').textContent=tl(S.parcalar.reduce((a,p)=>a+p.f,0));
+  const dolu=S.parcalar.map((p,i)=>({...p,i})).filter(p=>p.f>0);
+  $('ppWrap').hidden=!(S.mod==='parca'&&dolu.length);
+  $('pp').innerHTML=dolu.map(p=>`<div class="pp"><b>${esc(p.ad||'Parça '+(p.i+1))}</b><div class="l"><span>Normal: ${tl(p.f)}</span><span style="color:var(--ok)">Teklif: ${tl(indirimli(p.f,y))}</span></div><div class="l" style="font-size:13px"><span style="color:var(--warn)">Minimum: ${tl(indirimli(p.f,S.max))}</span><span style="color:var(--sub)">KK: ${tl(indirimli(p.f,y)/S.kk)}</span></div>${S.gizli?'':`<div class="l" style="font-size:13px;color:var(--sub)"><span>Geliş: ${tl(p.f/S.bol)}</span><span>Kâr: ${tl(indirimli(p.f,y)-p.f/S.bol)}</span></div>`}</div>`).join('');
+  document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',+b.dataset.y===y));
+}
+function setMod(m){S.mod=m;$('mT').classList.toggle('on',m==='takim');$('mP').classList.toggle('on',m==='parca');$('takim').hidden=m!=='takim';$('parca').hidden=m!=='parca';hesap()}
+function setMax(v){S.max=Math.max(5,Math.min(90,v));if(S.ind>S.max)S.ind=S.max;try{localStorage.setItem('maks',S.max)}catch(e){}renderChips();hesap()}
+
+$('mT').onclick=()=>setMod('takim');$('mP').onclick=()=>setMod('parca');
+$('tf').addEventListener('input',hesap);
+$('tf').addEventListener('blur',e=>{const n=num(e.target.value);e.target.value=n?fmt.format(n):''});
+$('sl').addEventListener('input',e=>{S.ind=+e.target.value;hesap()});
+$('chips').addEventListener('click',e=>{const y=e.target.dataset.y;if(y){S.ind=+y;hesap()}});
+$('pa').onclick=()=>{if(S.parcalar.length<20){S.parcalar.push({ad:'',f:0});renderParcalar();hesap()}};
+$('pm').onclick=()=>{if(S.parcalar.length>1){S.parcalar.pop();renderParcalar();hesap()}};
+$('plist').addEventListener('input',e=>{const t=e.target,i=+t.dataset.i;if(t.dataset.k==='ad')S.parcalar[i].ad=t.value;else S.parcalar[i].f=num(t.value);hesap()});
+$('plist').addEventListener('focusout',e=>{const t=e.target;if(t.dataset.k==='f'){const n=S.parcalar[+t.dataset.i].f;t.value=n?fmt.format(n):''}});
+function setBol(v){S.bol=Math.round(Math.max(1,Math.min(5,v))*10)/10;try{localStorage.setItem('bolen',S.bol)}catch(e){}hesap()}
+$('bm').onclick=()=>setBol(S.bol-0.1);$('ba').onclick=()=>setBol(S.bol+0.1);
+$('mg').onclick=()=>{S.gizli=!S.gizli;try{localStorage.setItem('mgizli',S.gizli?'1':'0')}catch(e){}hesap();renderKayit()};
+$('xm').onclick=()=>setMax(S.max-1);$('xa').onclick=()=>setMax(S.max+1);
+$('clr').onclick=()=>{$('ad').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0},{ad:'',f:0}];S.ind=10;renderParcalar();renderChips();hesap()};
+$('cp').onclick=async()=>{
+  const y=gInd(),N=normal();let s=`Sitare Mobilya – ${$('ad').value||'Teklif'}\n`;
+  if(S.mod==='parca')S.parcalar.forEach((p,i)=>{if(p.f>0)s+=`• ${p.ad||'Parça '+(i+1)}: ${tl(p.f)} → ${tl(indirimli(p.f,y))}\n`});
+  s+=`Liste fiyatı: ${tl(N)}\nİndirim: %${y}\nSize özel fiyat: ${tl(indirimli(N,y))}\nKredi kartı ile: ${tl(indirimli(N,y)/S.kk)}`;
+  try{await navigator.clipboard.writeText(s);$('cp').textContent='Kopyalandı ✓'}catch(e){$('cp').textContent='Kopyalanamadı'}
+  setTimeout(()=>$('cp').textContent='Müşteri teklifini kopyala',1500);
+};
+function setKk(v){S.kk=Math.round(Math.max(0.5,Math.min(1,v))*100)/100;try{localStorage.setItem('kkkat',S.kk)}catch(e){}hesap()}
+$('km').onclick=()=>setKk(S.kk-0.01);$('ka').onclick=()=>setKk(S.kk+0.01);
+
+// ---- Görünüm ----
+function gorunum(v){$('vHesap').hidden=v!=='h';$('vKayit').hidden=v!=='k';$('tH').classList.toggle('on',v==='h');$('tK').classList.toggle('on',v==='k');if(v==='k')renderKayit();window.scrollTo(0,0)}
+$('tH').onclick=()=>gorunum('h');$('tK').onclick=()=>gorunum('k');
+
+// ---- Kayıtlar ----
+let COL=null,KAYIT=[];
+const lsGet=()=>{try{return JSON.parse(localStorage.getItem('kayitlar')||'[]')}catch(e){return[]}};
+const lsSet=a=>{try{localStorage.setItem('kayitlar',JSON.stringify(a))}catch(e){}};
+KAYIT=lsGet();
+const tarih=t=>new Date(t).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+function renderKayit(){
+  $('kSay').textContent=KAYIT.length;
+  if(!KAYIT.length){$('kList').innerHTML='<div class="empty">Henüz kaydedilen teklif yok.<br>Hesapla ekranında "Teklifi kaydet"e dokun.</div>';return}
+  $('kList').innerHTML=KAYIT.map(k=>{
+    const C=k.normal/k.bol;
+    const parca=(k.parcalar||[]).map(p=>`${esc(p.ad||'Parça')}: ${tl(p.f)}`).join(' · ');
+    return `<div class="ki">
+      <div class="kh"><b>${esc(k.ad||'İsimsiz ürün')}</b><span class="s">${tarih(k.t)}</span></div>
+      ${k.not?`<div class="s">${esc(k.not)}</div>`:''}
+      ${parca?`<div class="s">${parca}</div>`:''}
+      <div class="l"><span>Liste: ${tl(k.normal)}</span><span style="color:var(--ok);font-weight:600">Teklif: ${tl(k.opt)} (%${k.ind})</span></div>
+      <div class="l s"><span style="color:var(--warn)">Min: ${tl(k.min)} (%${k.max})</span><span>KK: ${tl(k.opt/k.kk)}</span></div>
+      ${S.gizli?'':`<div class="l s"><span>Geliş: ${tl(C)}</span><span>Kâr: ${tl(k.opt-C)}</span></div>`}
+      <div class="kb"><button data-ac="${k.id}">Hesaplayıcıda aç</button><button class="del" data-sil="${k.id}">Sil</button></div>
+    </div>`}).join('');
+}
+
+$('kaydet').onclick=async()=>{
+  const N=normal(),b=$('kaydet');
+  if(!N){b.textContent='Önce fiyat gir';setTimeout(()=>b.textContent='Teklifi kaydet',1500);return}
+  const y=gInd(),t=Date.now();
+  const r={t,ad:$('ad').value.trim(),not:$('not').value.trim(),mod:S.mod,
+    parcalar:S.mod==='parca'?S.parcalar.filter(p=>p.f>0).map(p=>({ad:p.ad,f:p.f})):[],
+    normal:N,ind:y,max:S.max,opt:indirimli(N,y),min:indirimli(N,S.max),bol:S.bol,kk:S.kk};
+  const id='k'+t;
+  b.disabled=true;
+  const yerel=()=>{KAYIT=[{id,...r},...KAYIT];lsSet(KAYIT);renderKayit()};
+  try{
+    if(COL){
+      try{await COL.doc(id).set(r)}
+      catch(e){if(e&&e.code==='quota_exceeded')throw e;yerelMod();yerel()}
+    }else yerel();
+    b.textContent='Kaydedildi ✓';
+  }catch(e){b.textContent=e&&e.code==='quota_exceeded'?'Kayıt alanı dolu, eskileri sil':'Kaydedilemedi, tekrar dene'}
+  setTimeout(()=>{b.textContent='Teklifi kaydet';b.disabled=false},1500);
+};
+
+$('kList').addEventListener('click',async e=>{
+  const ac=e.target.dataset.ac,sil=e.target.dataset.sil;
+  if(ac){const k=KAYIT.find(x=>x.id===ac);if(!k)return;
+    $('ad').value=k.ad||'';$('not').value=k.not||'';S.ind=k.ind;
+    if(k.mod==='parca'){S.parcalar=k.parcalar.length?k.parcalar.map(p=>({...p})):[{ad:'',f:0},{ad:'',f:0}];renderParcalar();setMod('parca')}
+    else{$('tf').value=fmt.format(k.normal);setMod('takim')}
+    renderChips();hesap();gorunum('h');}
+  if(sil){const b=e.target;
+    if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Silinsin mi?';setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent='Sil'}},3000);return}
+    try{if(COL)await COL.doc(sil).delete();else{KAYIT=KAYIT.filter(x=>x.id!==sil);lsSet(KAYIT);renderKayit()}}catch(err){b.textContent='Silinemedi'}}
+});
+
+// Kalıcı depolama (Claude hesabına bağlı, cihazlar arası)
+const durum=(m,ok)=>{$('kDepo').textContent=m;$('kDepo').style.color=ok?'var(--ok)':'var(--sub)'};
+let UNSUB=null;
+function yerelMod(){if(UNSUB){try{UNSUB()}catch(e){}UNSUB=null}COL=null;KAYIT=lsGet();renderKayit();$('kDurum').textContent='';durum('Kayıtlar bu telefonda tutuluyor.')}
+(async()=>{
+  let ust=false;try{ust=window.top===window.self}catch(e){}
+  if(ust){yerelMod();try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}return}
+  durum('Kayıt alanı bağlanıyor…',true);
+  for(let i=0;i<150&&!(window.claude&&window.claude.use);i++)await new Promise(r=>setTimeout(r,100));
+  if(!(window.claude&&window.claude.use)){yerelMod();return}
+  try{
+    const db=await window.claude.use('db');
+    if(!db){yerelMod();return}
+    let sahip=null;
+    try{const u=await window.claude.use('user');if(u&&u.isOwner)sahip=await u.isOwner()}catch(e){}
+    if(sahip===false){yerelMod();return}
+    const col=db.collection('teklifler');
+    let tm=setTimeout(()=>{$('kDurum').textContent='Kayıtlara şu an ulaşılamıyor; liste güncel olmayabilir.'},10000);
+    UNSUB=col.orderBy('t','desc').onSnapshot(s=>{
+      if(!s.metadata.fromCache){clearTimeout(tm);$('kDurum').textContent=''}
+      KAYIT=s.docs.map(d=>({id:d.id,...d.data()}));renderKayit();
+      durum('✓ Kayıtlar hesabına kaydediliyor',true);
+    },err=>{clearTimeout(tm);yerelMod()});
+    COL=col;
+    const loc=lsGet();
+    if(loc.length){for(const k of loc){const {id,...r}=k;await col.doc(id).set(r)}lsSet([])}
+  }catch(e){yerelMod()}
+})();
+
+renderParcalar();renderChips();hesap();renderKayit();
+</script>
+</body>
+</html>
