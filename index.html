@@ -57,6 +57,14 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .kk{display:flex;justify-content:space-between;font-size:15px;margin-top:4px;color:var(--sub)}
 .kk b{color:var(--txt);font-variant-numeric:tabular-nums}
 .empty{padding:28px 16px;text-align:center;color:var(--sub)}
+.prow{padding:10px 16px;border-bottom:1px solid var(--line)}.prow:last-child{border-bottom:0}
+.prow .t{width:100%}
+.pline{display:flex;align-items:center;gap:8px;margin-top:8px}
+.adet{display:flex;align-items:center;background:var(--line);border-radius:8px;flex:none}
+.adet button{width:34px;height:34px;border:0;background:none;color:var(--txt);font-size:20px;padding:0}
+.adet input{width:34px;text-align:center;font-variant-numeric:tabular-nums}
+.pline .n{flex:1;width:auto}
+.ptl{font-size:13px;color:var(--sub);text-align:right;margin-top:4px;min-height:16px}
 .copy{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:inherit;font-weight:600}
 </style>
 </head>
@@ -137,7 +145,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <script>
 const $=id=>document.getElementById(id);
-const S={mod:'takim',parcalar:[{ad:'',f:0},{ad:'',f:0}],ind:10,max:35};
+const S={mod:'takim',parcalar:[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}],ind:10,max:35};
 S.bol=2.2;S.gizli=false;S.kk=0.87;
 try{const k=parseFloat(localStorage.getItem('kkkat'));if(k>=0.5&&k<=1)S.kk=k}catch(e){}
 const fk=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -145,18 +153,19 @@ try{const m=parseFloat(localStorage.getItem('maks'));if(m>=5&&m<=90)S.max=m}catc
 try{const b=parseFloat(localStorage.getItem('bolen'));if(b>=1&&b<=5)S.bol=b;S.gizli=localStorage.getItem('mgizli')==='1'}catch(e){}
 const fb=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
 function kar(el,pel,k,C){$(el).textContent=tl(k);$(el).style.color=k<0?'var(--red)':'var(--ok)';$(pel).textContent=C>0?`maliyetin %${Math.round(k/C*100)} üstü`:''}
+const ad_=p=>Math.max(1,parseInt(p.adet)||1);const pt=p=>(p.f||0)*ad_(p);
 const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:0});
 const tl=v=>fmt.format(Math.round(v))+' ₺';
 const num=s=>{s=String(s).replace(/\s|₺/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const n=parseFloat(s);return isNaN(n)?0:n};
 const indirimli=(f,y)=>f*(1-y/100);
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-function normal(){return S.mod==='takim'?num($('tf').value):S.parcalar.reduce((a,p)=>a+p.f,0)}
+function normal(){return S.mod==='takim'?num($('tf').value):S.parcalar.reduce((a,p)=>a+pt(p),0)}
 function gInd(){return Math.min(S.ind,S.max)}
 
 function renderParcalar(){
   $('pc').textContent=S.parcalar.length;
-  $('plist').innerHTML=S.parcalar.map((p,i)=>`<div class="row"><input class="t" data-i="${i}" data-k="ad" placeholder="Parça ${i+1}" value="${esc(p.ad)}"><input class="n" data-i="${i}" data-k="f" inputmode="decimal" placeholder="0" value="${p.f?fmt.format(p.f):''}" style="width:110px"><span class="cur">₺</span></div>`).join('');
+  $('plist').innerHTML=S.parcalar.map((p,i)=>`<div class="prow"><input class="t" data-i="${i}" data-k="ad" placeholder="Parça ${i+1} (ör. Sandalye)" value="${esc(p.ad)}"><div class="pline"><div class="adet"><button data-op="-1" data-i="${i}" aria-label="Azalt">−</button><input data-i="${i}" data-k="adet" inputmode="numeric" value="${ad_(p)}" aria-label="Adet"><button data-op="1" data-i="${i}" aria-label="Artır">+</button></div><span class="cur">adet ×</span><input class="n" data-i="${i}" data-k="f" inputmode="decimal" placeholder="Birim fiyat" value="${p.f?fmt.format(p.f):''}"><span class="cur">₺</span></div><div class="ptl" id="pt${i}"></div></div>`).join('');
 }
 function renderChips(){
   $('chips').innerHTML=[5,10,15,20,25,30,35].filter(y=>y<=S.max).map(y=>`<button data-y="${y}" class="${gInd()===y?'on':''}">%${y}</button>`).join('');
@@ -172,10 +181,11 @@ function hesap(){
   document.querySelectorAll('.kkl').forEach(e=>e.textContent=`Kredi kartı ile (÷ ${fk.format(S.kk)})`);$('kk2').textContent=fk.format(S.kk);
   const C=N/S.bol;$('kM').textContent=tl(C);kar('kO','kOp',O-C,C);kar('kN','kNp',M-C,C);
   $('bl1').textContent=`(÷ ${fb.format(S.bol)})`;$('bl2').textContent=fb.format(S.bol);
-  $('mWrap').hidden=S.gizli;$('mg').textContent=S.gizli?'Göster':'Gizle';$('ptot').textContent=tl(S.parcalar.reduce((a,p)=>a+p.f,0));
+  $('mWrap').hidden=S.gizli;$('mg').textContent=S.gizli?'Göster':'Gizle';$('ptot').textContent=tl(S.parcalar.reduce((a,p)=>a+pt(p),0));
+  S.parcalar.forEach((p,i)=>{const e=$('pt'+i);if(e)e.textContent=ad_(p)>1&&p.f>0?`${ad_(p)} adet × ${tl(p.f)} = ${tl(pt(p))}`:''});
   const dolu=S.parcalar.map((p,i)=>({...p,i})).filter(p=>p.f>0);
   $('ppWrap').hidden=!(S.mod==='parca'&&dolu.length);
-  $('pp').innerHTML=dolu.map(p=>`<div class="pp"><b>${esc(p.ad||'Parça '+(p.i+1))}</b><div class="l"><span>Normal: ${tl(p.f)}</span><span style="color:var(--ok)">Teklif: ${tl(indirimli(p.f,y))}</span></div><div class="l" style="font-size:13px"><span style="color:var(--warn)">Minimum: ${tl(indirimli(p.f,S.max))}</span><span style="color:var(--sub)">KK: ${tl(indirimli(p.f,y)/S.kk)}</span></div>${S.gizli?'':`<div class="l" style="font-size:13px;color:var(--sub)"><span>Geliş: ${tl(p.f/S.bol)}</span><span>Kâr: ${tl(indirimli(p.f,y)-p.f/S.bol)}</span></div>`}</div>`).join('');
+  $('pp').innerHTML=dolu.map(p=>{const T=pt(p),a=ad_(p);return `<div class="pp"><b>${esc(p.ad||'Parça '+(p.i+1))}${a>1?` × ${a}`:''}</b>${a>1?`<div class="l" style="font-size:13px;color:var(--sub)"><span>Adet başı: ${tl(p.f)}</span><span>Adet başı teklif: ${tl(indirimli(p.f,y))}</span></div>`:''}<div class="l"><span>Normal: ${tl(T)}</span><span style="color:var(--ok)">Teklif: ${tl(indirimli(T,y))}</span></div><div class="l" style="font-size:13px"><span style="color:var(--warn)">Minimum: ${tl(indirimli(T,S.max))}</span><span style="color:var(--sub)">KK: ${tl(indirimli(T,y)/S.kk)}</span></div>${S.gizli?'':`<div class="l" style="font-size:13px;color:var(--sub)"><span>Geliş: ${tl(T/S.bol)}</span><span>Kâr: ${tl(indirimli(T,y)-T/S.bol)}</span></div>`}</div>`}).join('');
   document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',+b.dataset.y===y));
 }
 function setMod(m){S.mod=m;$('mT').classList.toggle('on',m==='takim');$('mP').classList.toggle('on',m==='parca');$('takim').hidden=m!=='takim';$('parca').hidden=m!=='parca';hesap()}
@@ -186,18 +196,19 @@ $('tf').addEventListener('input',hesap);
 $('tf').addEventListener('blur',e=>{const n=num(e.target.value);e.target.value=n?fmt.format(n):''});
 $('sl').addEventListener('input',e=>{S.ind=+e.target.value;hesap()});
 $('chips').addEventListener('click',e=>{const y=e.target.dataset.y;if(y){S.ind=+y;hesap()}});
-$('pa').onclick=()=>{if(S.parcalar.length<20){S.parcalar.push({ad:'',f:0});renderParcalar();hesap()}};
+$('pa').onclick=()=>{if(S.parcalar.length<20){S.parcalar.push({ad:'',f:0,adet:1});renderParcalar();hesap()}};
 $('pm').onclick=()=>{if(S.parcalar.length>1){S.parcalar.pop();renderParcalar();hesap()}};
-$('plist').addEventListener('input',e=>{const t=e.target,i=+t.dataset.i;if(t.dataset.k==='ad')S.parcalar[i].ad=t.value;else S.parcalar[i].f=num(t.value);hesap()});
-$('plist').addEventListener('focusout',e=>{const t=e.target;if(t.dataset.k==='f'){const n=S.parcalar[+t.dataset.i].f;t.value=n?fmt.format(n):''}});
+$('plist').addEventListener('input',e=>{const t=e.target,i=+t.dataset.i;if(t.dataset.k==='ad')S.parcalar[i].ad=t.value;else if(t.dataset.k==='adet')S.parcalar[i].adet=Math.min(999,Math.max(1,parseInt(t.value)||1));else if(t.dataset.k==='f')S.parcalar[i].f=num(t.value);hesap()});
+$('plist').addEventListener('click',e=>{const b=e.target.closest('button[data-op]');if(!b)return;const i=+b.dataset.i,p=S.parcalar[i];p.adet=Math.min(999,Math.max(1,ad_(p)+(+b.dataset.op)));const inp=b.parentNode.querySelector('input');if(inp)inp.value=p.adet;hesap()});
+$('plist').addEventListener('focusout',e=>{const t=e.target;if(t.dataset.k==='f'){const n=S.parcalar[+t.dataset.i].f;t.value=n?fmt.format(n):''}if(t.dataset.k==='adet')t.value=ad_(S.parcalar[+t.dataset.i])});
 function setBol(v){S.bol=Math.round(Math.max(1,Math.min(5,v))*10)/10;try{localStorage.setItem('bolen',S.bol)}catch(e){}hesap()}
 $('bm').onclick=()=>setBol(S.bol-0.1);$('ba').onclick=()=>setBol(S.bol+0.1);
 $('mg').onclick=()=>{S.gizli=!S.gizli;try{localStorage.setItem('mgizli',S.gizli?'1':'0')}catch(e){}hesap();renderKayit()};
 $('xm').onclick=()=>setMax(S.max-1);$('xa').onclick=()=>setMax(S.max+1);
-$('clr').onclick=()=>{$('ad').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0},{ad:'',f:0}];S.ind=10;renderParcalar();renderChips();hesap()};
+$('clr').onclick=()=>{$('ad').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];S.ind=10;renderParcalar();renderChips();hesap()};
 $('cp').onclick=async()=>{
   const y=gInd(),N=normal();let s=`Sitare Mobilya – ${$('ad').value||'Teklif'}\n`;
-  if(S.mod==='parca')S.parcalar.forEach((p,i)=>{if(p.f>0)s+=`• ${p.ad||'Parça '+(i+1)}: ${tl(p.f)} → ${tl(indirimli(p.f,y))}\n`});
+  if(S.mod==='parca')S.parcalar.forEach((p,i)=>{if(p.f>0)s+=`• ${p.ad||'Parça '+(i+1)}${ad_(p)>1?` (${ad_(p)} adet)`:''}: ${tl(pt(p))} → ${tl(indirimli(pt(p),y))}\n`});
   s+=`Liste fiyatı: ${tl(N)}\nİndirim: %${y}\nSize özel fiyat: ${tl(indirimli(N,y))}\nKredi kartı ile: ${tl(indirimli(N,y)/S.kk)}`;
   try{await navigator.clipboard.writeText(s);$('cp').textContent='Kopyalandı ✓'}catch(e){$('cp').textContent='Kopyalanamadı'}
   setTimeout(()=>$('cp').textContent='Müşteri teklifini kopyala',1500);
@@ -221,7 +232,7 @@ function renderKayit(){
   if(!KAYIT.length){$('kList').innerHTML='<div class="empty">Henüz kaydedilen teklif yok.<br>Hesapla ekranında "Teklifi kaydet"e dokun.</div>';return}
   $('kList').innerHTML=KAYIT.map(k=>{
     const C=k.normal/k.bol;
-    const parca=(k.parcalar||[]).map(p=>`${esc(p.ad||'Parça')}: ${tl(p.f)}`).join(' · ');
+    const parca=(k.parcalar||[]).map(p=>`${esc(p.ad||'Parça')}${ad_(p)>1?` ×${ad_(p)}`:''}: ${tl(pt(p))}`).join(' · ');
     return `<div class="ki">
       <div class="kh"><b>${esc(k.ad||'İsimsiz ürün')}</b><span class="s">${tarih(k.t)}</span></div>
       ${k.not?`<div class="s">${esc(k.not)}</div>`:''}
@@ -238,7 +249,7 @@ $('kaydet').onclick=async()=>{
   if(!N){b.textContent='Önce fiyat gir';setTimeout(()=>b.textContent='Teklifi kaydet',1500);return}
   const y=gInd(),t=Date.now();
   const r={t,ad:$('ad').value.trim(),not:$('not').value.trim(),mod:S.mod,
-    parcalar:S.mod==='parca'?S.parcalar.filter(p=>p.f>0).map(p=>({ad:p.ad,f:p.f})):[],
+    parcalar:S.mod==='parca'?S.parcalar.filter(p=>p.f>0).map(p=>({ad:p.ad,f:p.f,adet:ad_(p)})):[],
     normal:N,ind:y,max:S.max,opt:indirimli(N,y),min:indirimli(N,S.max),bol:S.bol,kk:S.kk};
   const id='k'+t;
   b.disabled=true;
@@ -257,7 +268,7 @@ $('kList').addEventListener('click',async e=>{
   const ac=e.target.dataset.ac,sil=e.target.dataset.sil;
   if(ac){const k=KAYIT.find(x=>x.id===ac);if(!k)return;
     $('ad').value=k.ad||'';$('not').value=k.not||'';S.ind=k.ind;
-    if(k.mod==='parca'){S.parcalar=k.parcalar.length?k.parcalar.map(p=>({...p})):[{ad:'',f:0},{ad:'',f:0}];renderParcalar();setMod('parca')}
+    if(k.mod==='parca'){S.parcalar=k.parcalar.length?k.parcalar.map(p=>({...p,adet:ad_(p)})):[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];renderParcalar();setMod('parca')}
     else{$('tf').value=fmt.format(k.normal);setMod('takim')}
     renderChips();hesap();gorunum('h');}
   if(sil){const b=e.target;
