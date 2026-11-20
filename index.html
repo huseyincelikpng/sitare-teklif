@@ -75,6 +75,18 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .kf .ch{color:var(--sub);font-size:24px;flex:none}
 .geri{border:0;background:none;color:var(--acc);font:inherit;font-size:17px;padding:14px 4px 0}
 .yeniT{display:block;width:100%;margin:0 0 10px;padding:11px;border:0;border-radius:12px;background:var(--card);color:var(--acc);font:inherit;font-weight:600}
+.durum{display:flex;gap:6px;margin-top:10px}
+.durum button{flex:1;border:0;border-radius:8px;padding:7px 4px;font:inherit;font-size:14px;background:var(--line);color:var(--sub)}
+.durum button.on[data-dur=bekliyor]{background:var(--warn);color:#fff;font-weight:600}
+.durum button.on[data-dur=satildi]{background:var(--ok);color:#fff;font-weight:600}
+.durum button.on[data-dur=vazgecti]{background:var(--red);color:#fff;font-weight:600}
+.ki[data-d=bekliyor]{box-shadow:inset 4px 0 var(--warn)}
+.ki[data-d=satildi]{box-shadow:inset 4px 0 var(--ok)}
+.ki[data-d=vazgecti]{box-shadow:inset 4px 0 var(--red)}
+.tk{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:15px}
+.tk input,#takip{font:inherit;font-size:15px;color:var(--txt);background:var(--line);border-radius:8px;padding:5px 8px;min-width:120px;min-height:32px}
+.gec{color:var(--red);font-weight:600}.bug{color:var(--warn);font-weight:600}
+.kf .tkm{font-size:13px;text-align:right;flex:none;max-width:42%}
 .copy{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:inherit;font-weight:600}
 </style>
 </head>
@@ -84,6 +96,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="seg" style="margin:0 0 4px"><button id="tH" class="on">Hesapla</button><button id="tK">Kaydedilenler (<span id="kSay">0</span>)</button></div>
 
 <div id="vKayit" hidden>
+  <div id="kTakip"></div>
   <div class="card" id="kAraW" style="margin-top:14px"><div class="row"><input class="t" id="kAra" placeholder="🔍 Müşteri ara" autocomplete="off"></div></div>
   <div id="kBas"></div>
   <div class="card" id="kList"></div>
@@ -92,6 +105,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 </div>
 
 <div id="vHesap">
+<button class="yeniT" id="tkBan" style="margin-top:10px" hidden></button>
 
 <h2>Ürün</h2>
 <div class="card">
@@ -150,12 +164,14 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="card">
   <div class="row"><input class="t" id="musteri" list="mList" placeholder="Müşteri adı (klasörü bu isimle açılır)" autocomplete="off"></div>
   <div class="row"><input class="t" id="not" placeholder="Not (isteğe bağlı)"></div>
+  <div class="row"><label>📅 Takip tarihi</label><input type="date" id="takip"></div>
+  <div class="chips" id="tkChips" style="padding-top:2px"><button data-gun="1">Yarın</button><button data-gun="3">3 gün sonra</button><button data-gun="7">1 hafta sonra</button><button data-gun="-1">Takip yok</button></div>
 </div>
 <datalist id="mList"></datalist>
 <button class="copy" id="kaydet">Teklifi kaydet</button>
 <button class="copy" id="cp" style="margin-top:10px;background:var(--card);color:var(--acc)">Müşteri teklifini kopyala</button>
 <div class="foot" style="text-align:center">Kopyalanan metinde minimum fiyat ve maliyet yer almaz.</div>
-<div class="foot" style="text-align:center;margin-top:14px">Sürüm 5</div>
+<div class="foot" style="text-align:center;margin-top:14px">Sürüm 6</div>
 </div>
 </div>
 
@@ -221,7 +237,7 @@ function setBol(v){S.bol=Math.round(Math.max(1,Math.min(5,v))*10)/10;try{localSt
 $('bm').onclick=()=>setBol(S.bol-0.1);$('ba').onclick=()=>setBol(S.bol+0.1);
 $('mg').onclick=()=>{S.gizli=!S.gizli;try{localStorage.setItem('mgizli',S.gizli?'1':'0')}catch(e){}hesap();renderKayit()};
 $('xm').onclick=()=>setMax(S.max-1);$('xa').onclick=()=>setMax(S.max+1);
-$('clr').onclick=()=>{$('ad').value='';$('musteri').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];S.ind=10;renderParcalar();renderChips();hesap()};
+$('clr').onclick=()=>{$('ad').value='';$('musteri').value='';$('takip').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];S.ind=10;renderParcalar();renderChips();hesap()};
 $('cp').onclick=async()=>{
   const y=gInd(),N=normal();let s=`Sitare Mobilya – ${$('ad').value||'Teklif'}\n`;
   if(S.mod==='parca')S.parcalar.forEach((p,i)=>{if(p.f>0)s+=`• ${p.ad||'Parça '+(i+1)}${ad_(p)>1?` (${ad_(p)} adet)`:''}: ${tl(pt(p))} → ${tl(indirimli(pt(p),y))}\n`});
@@ -244,6 +260,21 @@ KAYIT=lsGet();
 const tarih=t=>new Date(t).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
 let KLASOR=null;
+const dur=k=>k.durum||'bekliyor';
+const DURAD={bekliyor:'Bekliyor',satildi:'Satıldı ✓',vazgecti:'Vazgeçti'};
+const pad=n=>String(n).padStart(2,'0');
+const gunStr=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const bugun=()=>gunStr(new Date());
+const gunEkle=n=>{const d=new Date();d.setDate(d.getDate()+n);return gunStr(d)};
+function tkMetin(v){
+  const [y,m,d]=v.split('-').map(Number);const t=new Date(y,m-1,d),b=new Date();b.setHours(0,0,0,0);
+  const f=Math.round((t-b)/864e5),ad=t.toLocaleDateString('tr-TR',{day:'numeric',month:'short',weekday:'short'});
+  if(f<0)return{cls:'gec',txt:`${-f} gün gecikti`};
+  if(f===0)return{cls:'bug',txt:'Bugün'};
+  if(f===1)return{cls:'',txt:'Yarın'};
+  return{cls:'',txt:`${ad} (${f} gün)`};
+}
+const takipte=k=>dur(k)==='bekliyor'&&!!k.takip;
 const mAd=k=>String((k.musteri!==undefined?k.musteri:k.not)||'').trim();
 const mKey=k=>mAd(k).toLocaleLowerCase('tr')||'__yok';
 function gruplar(){
@@ -254,16 +285,21 @@ function gruplar(){
 }
 function renderKayit(){
   $('kSay').textContent=KAYIT.length;
+  const due=KAYIT.filter(k=>takipte(k)&&k.takip<=bugun()).length;
+  $('tkBan').hidden=!due;$('tkBan').textContent=`📅 Bugün aranacak ${due} teklif var ›`;
+  const T=KAYIT.filter(k=>takipte(k)&&k.takip<=gunEkle(7)).sort((a,b)=>a.takip<b.takip?-1:a.takip>b.takip?1:b.t-a.t);
+  $('kTakip').innerHTML=T.length?`<h2>📅 Takip (${T.length})</h2><div class="card">${T.map(k=>{const m=tkMetin(k.takip);return `<button class="kf" data-kl="${esc(mKey(k))}"><span class="ic">📅</span><span class="mt"><b>${esc(mAd(k)||'Müşteri adı girilmemiş')}</b><span class="s">${esc(k.ad||'İsimsiz ürün')} · ${tl(k.opt)}</span></span><span class="tkm ${m.cls}">${m.txt}</span></button>`}).join('')}</div>`:'';
   const G=gruplar();
   $('mList').innerHTML=G.filter(x=>x.key!=='__yok').map(x=>`<option value="${esc(x.ad)}"></option>`).join('');
   if(KLASOR&&!G.some(x=>x.key===KLASOR))KLASOR=null;
+  $('kTakip').hidden=!!KLASOR;
   if(!KAYIT.length){$('kAraW').hidden=true;$('kBas').innerHTML='<h2>Müşteriler</h2>';$('kList').innerHTML='<div class="empty">Henüz kaydedilen teklif yok.<br>Hesapla ekranında "Teklifi kaydet"e dokun.</div>';return}
   if(!KLASOR){
     $('kAraW').hidden=false;
     const q=$('kAra').value.trim().toLocaleLowerCase('tr');
     const L=G.filter(x=>!q||x.ad.toLocaleLowerCase('tr').includes(q));
     $('kBas').innerHTML=`<h2>Müşteriler (${G.length})</h2>`;
-    $('kList').innerHTML=L.length?L.map(x=>`<button class="kf" data-kl="${esc(x.key)}"><span class="ic">${x.key==='__yok'?'🗂️':'📁'}</span><span class="mt"><b>${esc(x.ad)}</b><span class="s">${x.items.length} teklif · son: ${tarih(x.son)}</span></span><span class="ch">›</span></button>`).join(''):'<div class="empty">Bu isimde müşteri yok.</div>';
+    $('kList').innerHTML=L.length?L.map(x=>`<button class="kf" data-kl="${esc(x.key)}"><span class="ic">${x.key==='__yok'?'🗂️':'📁'}</span><span class="mt"><b>${esc(x.ad)}</b><span class="s">${x.items.length} teklif · son: ${tarih(x.son)}</span><span class="s">${['bekliyor','satildi','vazgecti'].map(d=>[d,x.items.filter(k=>dur(k)===d).length]).filter(a=>a[1]).map(([d,n])=>`<span style="color:var(--${d==='bekliyor'?'warn':d==='satildi'?'ok':'red'})">${n} ${DURAD[d].replace(' ✓','').toLocaleLowerCase('tr')}</span>`).join(' · ')}</span></span><span class="ch">›</span></button>`).join(''):'<div class="empty">Bu isimde müşteri yok.</div>';
     return;
   }
   const F=G.find(x=>x.key===KLASOR);
@@ -272,13 +308,16 @@ function renderKayit(){
   $('kList').innerHTML=F.items.map(k=>{
     const C=k.normal/k.bol;
     const parca=(k.parcalar||[]).map(p=>`${esc(p.ad||'Parça')}${ad_(p)>1?` ×${ad_(p)}`:''}: ${tl(pt(p))}`).join(' · ');
-    return `<div class="ki">
+    const m=k.takip?tkMetin(k.takip):null;
+    return `<div class="ki" data-d="${dur(k)}">
       <div class="kh"><b>${esc(k.ad||'İsimsiz ürün')}</b><span class="s">${tarih(k.t)}</span></div>
       ${k.musteri!==undefined&&k.not?`<div class="s">📝 ${esc(k.not)}</div>`:''}
       ${parca?`<div class="s">${parca}</div>`:''}
       <div class="l"><span>Liste: ${tl(k.normal)}</span><span style="color:var(--ok);font-weight:600">Teklif: ${tl(k.opt)} (%${k.ind})</span></div>
       <div class="l s"><span style="color:var(--warn)">Min: ${tl(k.min)} (%${k.max})</span><span>KK: ${tl(k.opt/k.kk)}</span></div>
       ${S.gizli?'':`<div class="l s"><span>Geliş: ${tl(C)}</span><span>Kâr: ${tl(k.opt-C)}</span></div>`}
+      <div class="tk"><span>📅 Takip${m&&dur(k)==='bekliyor'?`: <span class="${m.cls}">${m.txt}</span>`:''}</span><input type="date" data-tk="${k.id}" value="${esc(k.takip||'')}" aria-label="Takip tarihi"></div>
+      <div class="durum">${['bekliyor','satildi','vazgecti'].map(d=>`<button data-dur="${d}" data-id="${k.id}" class="${dur(k)===d?'on':''}">${DURAD[d]}</button>`).join('')}</div>
       <div class="kb"><button data-ac="${k.id}">Hesaplayıcıda aç</button><button class="del" data-sil="${k.id}">Sil</button></div>
     </div>`}).join('');
 }
@@ -287,7 +326,7 @@ $('kaydet').onclick=async()=>{
   const N=normal(),b=$('kaydet');
   if(!N){b.textContent='Önce fiyat gir';setTimeout(()=>b.textContent='Teklifi kaydet',1500);return}
   const y=gInd(),t=Date.now();
-  const r={t,ad:$('ad').value.trim(),musteri:$('musteri').value.trim(),not:$('not').value.trim(),mod:S.mod,
+  const r={t,ad:$('ad').value.trim(),musteri:$('musteri').value.trim(),not:$('not').value.trim(),durum:'bekliyor',takip:$('takip').value||'',mod:S.mod,
     parcalar:S.mod==='parca'?S.parcalar.filter(p=>p.f>0).map(p=>({ad:p.ad,f:p.f,adet:ad_(p)})):[],
     normal:N,ind:y,max:S.max,opt:indirimli(N,y),min:indirimli(N,S.max),bol:S.bol,kk:S.kk};
   const id='k'+t;
@@ -304,15 +343,24 @@ $('kaydet').onclick=async()=>{
 };
 
 $('kAra').addEventListener('input',renderKayit);
+async function guncelle(id,patch){
+  if(COL){try{await COL.doc(id).update(patch);$('kDurum').textContent=''}catch(e){$('kDurum').textContent='Güncellenemedi, tekrar dene.'}}
+  else{KAYIT=KAYIT.map(k=>k.id===id?{...k,...patch}:k);lsSet(KAYIT);renderKayit()}
+}
+$('kList').addEventListener('change',e=>{const id=e.target.dataset.tk;if(id)guncelle(id,{takip:e.target.value||''})});
+$('tkBan').onclick=()=>{KLASOR=null;$('kAra').value='';gorunum('k')};
+$('tkChips').addEventListener('click',e=>{const g=e.target.dataset.gun;if(g!==undefined)$('takip').value=+g<0?'':gunEkle(+g)});
+$('kTakip').addEventListener('click',e=>{const kl=e.target.closest('[data-kl]');if(kl){KLASOR=kl.dataset.kl;renderKayit();window.scrollTo(0,0)}});
 $('kBas').addEventListener('click',e=>{
   if(e.target.id==='kGeri'){KLASOR=null;renderKayit();window.scrollTo(0,0)}
   if(e.target.id==='kYeni'){$('musteri').value=e.target.dataset.ad;gorunum('h')}
 });
 $('kList').addEventListener('click',async e=>{
+  const du=e.target.closest('[data-dur]');if(du){if(!du.classList.contains('on'))guncelle(du.dataset.id,{durum:du.dataset.dur});return}
   const kl=e.target.closest('[data-kl]');if(kl){KLASOR=kl.dataset.kl;renderKayit();window.scrollTo(0,0);return}
   const ac=e.target.dataset.ac,sil=e.target.dataset.sil;
   if(ac){const k=KAYIT.find(x=>x.id===ac);if(!k)return;
-    $('ad').value=k.ad||'';$('musteri').value=mAd(k);$('not').value=k.musteri!==undefined?(k.not||''):'';S.ind=k.ind;
+    $('ad').value=k.ad||'';$('musteri').value=mAd(k);$('takip').value=k.takip||'';$('not').value=k.musteri!==undefined?(k.not||''):'';S.ind=k.ind;
     if(k.mod==='parca'){S.parcalar=k.parcalar.length?k.parcalar.map(p=>({...p,adet:ad_(p)})):[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];renderParcalar();setMod('parca')}
     else{$('tf').value=fmt.format(k.normal);setMod('takim')}
     renderChips();hesap();gorunum('h');}
@@ -352,7 +400,7 @@ function yerelMod(){if(UNSUB){try{UNSUB()}catch(e){}UNSUB=null}COL=null;KAYIT=ls
 
 renderParcalar();renderChips();hesap();renderKayit();
 // ---- Otomatik güncelleme (sadece GitHub sürümü) ----
-const SURUM='5';
+const SURUM='6';
 (async()=>{
   let ust=false;try{ust=window.top===window.self}catch(e){}
   if(!ust||!window.fetch)return;
