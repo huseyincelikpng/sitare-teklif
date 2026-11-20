@@ -66,6 +66,15 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .adet input{width:34px;text-align:center;font-variant-numeric:tabular-nums}
 .pline .n{flex:1;width:auto}
 .ptl{font-size:13px;color:var(--sub);text-align:right;margin-top:4px;min-height:16px}
+.kf{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--txt);font:inherit;text-align:left}
+.kf:last-child{border-bottom:0}
+.kf .ic{font-size:26px;flex:none}
+.kf .mt{flex:1;min-width:0}
+.kf .mt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kf .s{display:block;font-size:13px;color:var(--sub)}
+.kf .ch{color:var(--sub);font-size:24px;flex:none}
+.geri{border:0;background:none;color:var(--acc);font:inherit;font-size:17px;padding:14px 4px 0}
+.yeniT{display:block;width:100%;margin:0 0 10px;padding:11px;border:0;border-radius:12px;background:var(--card);color:var(--acc);font:inherit;font-weight:600}
 .copy{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:inherit;font-weight:600}
 </style>
 </head>
@@ -75,7 +84,8 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="seg" style="margin:0 0 4px"><button id="tH" class="on">Hesapla</button><button id="tK">Kaydedilenler (<span id="kSay">0</span>)</button></div>
 
 <div id="vKayit" hidden>
-  <h2>Kaydedilen Teklifler</h2>
+  <div class="card" id="kAraW" style="margin-top:14px"><div class="row"><input class="t" id="kAra" placeholder="🔍 Müşteri ara" autocomplete="off"></div></div>
+  <div id="kBas"></div>
   <div class="card" id="kList"></div>
   <div class="foot" id="kDurum"></div>
   <div class="foot" id="kDepo" style="font-weight:600"></div>
@@ -137,11 +147,15 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 </div>
 
 <h2>Kaydet</h2>
-<div class="card"><div class="row"><input class="t" id="not" placeholder="Müşteri adı / not (isteğe bağlı)"></div></div>
+<div class="card">
+  <div class="row"><input class="t" id="musteri" list="mList" placeholder="Müşteri adı (klasörü bu isimle açılır)" autocomplete="off"></div>
+  <div class="row"><input class="t" id="not" placeholder="Not (isteğe bağlı)"></div>
+</div>
+<datalist id="mList"></datalist>
 <button class="copy" id="kaydet">Teklifi kaydet</button>
 <button class="copy" id="cp" style="margin-top:10px;background:var(--card);color:var(--acc)">Müşteri teklifini kopyala</button>
 <div class="foot" style="text-align:center">Kopyalanan metinde minimum fiyat ve maliyet yer almaz.</div>
-<div class="foot" style="text-align:center;margin-top:14px">Sürüm 4</div>
+<div class="foot" style="text-align:center;margin-top:14px">Sürüm 5</div>
 </div>
 </div>
 
@@ -207,7 +221,7 @@ function setBol(v){S.bol=Math.round(Math.max(1,Math.min(5,v))*10)/10;try{localSt
 $('bm').onclick=()=>setBol(S.bol-0.1);$('ba').onclick=()=>setBol(S.bol+0.1);
 $('mg').onclick=()=>{S.gizli=!S.gizli;try{localStorage.setItem('mgizli',S.gizli?'1':'0')}catch(e){}hesap();renderKayit()};
 $('xm').onclick=()=>setMax(S.max-1);$('xa').onclick=()=>setMax(S.max+1);
-$('clr').onclick=()=>{$('ad').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];S.ind=10;renderParcalar();renderChips();hesap()};
+$('clr').onclick=()=>{$('ad').value='';$('musteri').value='';$('not').value='';$('tf').value='';S.parcalar=[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];S.ind=10;renderParcalar();renderChips();hesap()};
 $('cp').onclick=async()=>{
   const y=gInd(),N=normal();let s=`Sitare Mobilya – ${$('ad').value||'Teklif'}\n`;
   if(S.mod==='parca')S.parcalar.forEach((p,i)=>{if(p.f>0)s+=`• ${p.ad||'Parça '+(i+1)}${ad_(p)>1?` (${ad_(p)} adet)`:''}: ${tl(pt(p))} → ${tl(indirimli(pt(p),y))}\n`});
@@ -229,15 +243,38 @@ const lsSet=a=>{try{localStorage.setItem('kayitlar',JSON.stringify(a))}catch(e){
 KAYIT=lsGet();
 const tarih=t=>new Date(t).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
+let KLASOR=null;
+const mAd=k=>String((k.musteri!==undefined?k.musteri:k.not)||'').trim();
+const mKey=k=>mAd(k).toLocaleLowerCase('tr')||'__yok';
+function gruplar(){
+  const g=new Map();
+  [...KAYIT].sort((a,b)=>b.t-a.t).forEach(k=>{const key=mKey(k);if(!g.has(key))g.set(key,{key,ad:'',items:[],son:k.t});const x=g.get(key);x.items.push(k);const a=mAd(k);if(a&&(!x.ad||(x.ad===x.ad.toLocaleLowerCase('tr')&&a!==a.toLocaleLowerCase('tr'))))x.ad=a});
+  g.forEach(x=>{if(!x.ad)x.ad='Müşteri adı girilmemiş';else if(x.ad===x.ad.toLocaleLowerCase('tr'))x.ad=x.ad.split(' ').map(w=>w.charAt(0).toLocaleUpperCase('tr')+w.slice(1)).join(' ')});
+  return [...g.values()].sort((a,b)=>(a.key==='__yok')-(b.key==='__yok')||b.son-a.son);
+}
 function renderKayit(){
   $('kSay').textContent=KAYIT.length;
-  if(!KAYIT.length){$('kList').innerHTML='<div class="empty">Henüz kaydedilen teklif yok.<br>Hesapla ekranında "Teklifi kaydet"e dokun.</div>';return}
-  $('kList').innerHTML=KAYIT.map(k=>{
+  const G=gruplar();
+  $('mList').innerHTML=G.filter(x=>x.key!=='__yok').map(x=>`<option value="${esc(x.ad)}"></option>`).join('');
+  if(KLASOR&&!G.some(x=>x.key===KLASOR))KLASOR=null;
+  if(!KAYIT.length){$('kAraW').hidden=true;$('kBas').innerHTML='<h2>Müşteriler</h2>';$('kList').innerHTML='<div class="empty">Henüz kaydedilen teklif yok.<br>Hesapla ekranında "Teklifi kaydet"e dokun.</div>';return}
+  if(!KLASOR){
+    $('kAraW').hidden=false;
+    const q=$('kAra').value.trim().toLocaleLowerCase('tr');
+    const L=G.filter(x=>!q||x.ad.toLocaleLowerCase('tr').includes(q));
+    $('kBas').innerHTML=`<h2>Müşteriler (${G.length})</h2>`;
+    $('kList').innerHTML=L.length?L.map(x=>`<button class="kf" data-kl="${esc(x.key)}"><span class="ic">${x.key==='__yok'?'🗂️':'📁'}</span><span class="mt"><b>${esc(x.ad)}</b><span class="s">${x.items.length} teklif · son: ${tarih(x.son)}</span></span><span class="ch">›</span></button>`).join(''):'<div class="empty">Bu isimde müşteri yok.</div>';
+    return;
+  }
+  const F=G.find(x=>x.key===KLASOR);
+  $('kAraW').hidden=true;
+  $('kBas').innerHTML=`<button class="geri" id="kGeri">‹ Müşteriler</button><div style="margin:10px 4px 10px;font-size:22px;font-weight:700">📁 ${esc(F.ad)} <span class="s" style="font-weight:400;font-size:15px">· ${F.items.length} teklif</span></div>${F.key!=='__yok'?`<button class="yeniT" id="kYeni" data-ad="${esc(F.ad)}">+ ${esc(F.ad)} için yeni teklif</button>`:''}`;
+  $('kList').innerHTML=F.items.map(k=>{
     const C=k.normal/k.bol;
     const parca=(k.parcalar||[]).map(p=>`${esc(p.ad||'Parça')}${ad_(p)>1?` ×${ad_(p)}`:''}: ${tl(pt(p))}`).join(' · ');
     return `<div class="ki">
       <div class="kh"><b>${esc(k.ad||'İsimsiz ürün')}</b><span class="s">${tarih(k.t)}</span></div>
-      ${k.not?`<div class="s">${esc(k.not)}</div>`:''}
+      ${k.musteri!==undefined&&k.not?`<div class="s">📝 ${esc(k.not)}</div>`:''}
       ${parca?`<div class="s">${parca}</div>`:''}
       <div class="l"><span>Liste: ${tl(k.normal)}</span><span style="color:var(--ok);font-weight:600">Teklif: ${tl(k.opt)} (%${k.ind})</span></div>
       <div class="l s"><span style="color:var(--warn)">Min: ${tl(k.min)} (%${k.max})</span><span>KK: ${tl(k.opt/k.kk)}</span></div>
@@ -250,7 +287,7 @@ $('kaydet').onclick=async()=>{
   const N=normal(),b=$('kaydet');
   if(!N){b.textContent='Önce fiyat gir';setTimeout(()=>b.textContent='Teklifi kaydet',1500);return}
   const y=gInd(),t=Date.now();
-  const r={t,ad:$('ad').value.trim(),not:$('not').value.trim(),mod:S.mod,
+  const r={t,ad:$('ad').value.trim(),musteri:$('musteri').value.trim(),not:$('not').value.trim(),mod:S.mod,
     parcalar:S.mod==='parca'?S.parcalar.filter(p=>p.f>0).map(p=>({ad:p.ad,f:p.f,adet:ad_(p)})):[],
     normal:N,ind:y,max:S.max,opt:indirimli(N,y),min:indirimli(N,S.max),bol:S.bol,kk:S.kk};
   const id='k'+t;
@@ -266,10 +303,16 @@ $('kaydet').onclick=async()=>{
   setTimeout(()=>{b.textContent='Teklifi kaydet';b.disabled=false},1500);
 };
 
+$('kAra').addEventListener('input',renderKayit);
+$('kBas').addEventListener('click',e=>{
+  if(e.target.id==='kGeri'){KLASOR=null;renderKayit();window.scrollTo(0,0)}
+  if(e.target.id==='kYeni'){$('musteri').value=e.target.dataset.ad;gorunum('h')}
+});
 $('kList').addEventListener('click',async e=>{
+  const kl=e.target.closest('[data-kl]');if(kl){KLASOR=kl.dataset.kl;renderKayit();window.scrollTo(0,0);return}
   const ac=e.target.dataset.ac,sil=e.target.dataset.sil;
   if(ac){const k=KAYIT.find(x=>x.id===ac);if(!k)return;
-    $('ad').value=k.ad||'';$('not').value=k.not||'';S.ind=k.ind;
+    $('ad').value=k.ad||'';$('musteri').value=mAd(k);$('not').value=k.musteri!==undefined?(k.not||''):'';S.ind=k.ind;
     if(k.mod==='parca'){S.parcalar=k.parcalar.length?k.parcalar.map(p=>({...p,adet:ad_(p)})):[{ad:'',f:0,adet:1},{ad:'',f:0,adet:1}];renderParcalar();setMod('parca')}
     else{$('tf').value=fmt.format(k.normal);setMod('takim')}
     renderChips();hesap();gorunum('h');}
@@ -309,7 +352,7 @@ function yerelMod(){if(UNSUB){try{UNSUB()}catch(e){}UNSUB=null}COL=null;KAYIT=ls
 
 renderParcalar();renderChips();hesap();renderKayit();
 // ---- Otomatik güncelleme (sadece GitHub sürümü) ----
-const SURUM='4';
+const SURUM='5';
 (async()=>{
   let ust=false;try{ust=window.top===window.self}catch(e){}
   if(!ust||!window.fetch)return;
